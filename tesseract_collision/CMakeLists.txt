@@ -3,6 +3,8 @@ project(tesseract_collision)
 
 add_compile_options(-std=c++11 -Wall -Wextra)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 find_package(catkin REQUIRED COMPONENTS
   bullet3_ros
   roscpp

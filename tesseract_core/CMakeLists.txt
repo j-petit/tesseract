@@ -12,6 +12,8 @@ add_compile_options(
 #-Wunused -Wunreachable-code -Wno-write-strings -pedantic
 #-Wfloat-equal
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 find_package(catkin REQUIRED geometric_shapes)
 
 ## System dependencies are found with CMake's conventions
