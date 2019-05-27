@@ -43,6 +43,7 @@
 
 #include <tesseract_collision/bullet/bullet_utils.h>
 #include <tesseract_core/discrete_contact_manager_base.h>
+#include <moveit/collision_detection/collision_matrix.h>
 namespace tesseract
 {
 namespace tesseract_bullet
@@ -89,6 +90,8 @@ public:
   IsContactAllowedFn getIsContactAllowedFn() const override;
 
   void contactTest(ContactResultMap& collisions, const ContactTestType& type) override;
+
+  void contactTest(ContactResultMap& collisions, const ContactTestType& type, const collision_detection::AllowedCollisionMatrix* acm);
 
   /**
    * @brief A a bullet collision object to the manager

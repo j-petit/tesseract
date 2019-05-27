@@ -261,6 +261,77 @@ void BulletDiscreteSimpleManager::contactTest(ContactResultMap& collisions, cons
   }
 }
 
+void BulletDiscreteSimpleManager::contactTest(ContactResultMap& collisions, const ContactTestType& type, const collision_detection::AllowedCollisionMatrix* acm)
+{
+  ContactTestData cdata(active_, contact_distance_, fn_, type, collisions);
+
+  for (auto cow1_iter = cows_.begin(); cow1_iter != (cows_.end() - 1); cow1_iter++)
+  {
+    const COWPtr& cow1 = *cow1_iter;
+
+    if (cow1->m_collisionFilterGroup != btBroadphaseProxy::KinematicFilter)
+      break;
+
+    if (!cow1->m_enabled)
+      continue;
+
+    btVector3 min_aabb[2], max_aabb[2];
+    cow1->getAABB(min_aabb[0], max_aabb[0]);
+
+    btCollisionObjectWrapper obA(nullptr, cow1->getCollisionShape(), cow1.get(), cow1->getWorldTransform(), -1, -1);
+
+    DiscreteCollisionCollector cc(cdata, cow1, static_cast<double>(cow1->getContactProcessingThreshold()));
+
+    collision_detection::AllowedCollision::Type allowed_type;
+    for (auto cow2_iter = cow1_iter + 1; cow2_iter != cows_.end(); cow2_iter++)
+    {
+
+      assert(!cdata.done);
+
+      const COWPtr& cow2 = *cow2_iter;
+      cow2->getAABB(min_aabb[1], max_aabb[1]);
+
+      if (!acm->getEntry(cow1->getName(), cow2->getName(), allowed_type) || !(allowed_type == collision_detection::AllowedCollision::Type::NEVER)) {
+          continue;
+      }
+
+
+      bool aabb_check = (min_aabb[0][0] <= max_aabb[1][0] && max_aabb[0][0] >= min_aabb[1][0]) &&
+                        (min_aabb[0][1] <= max_aabb[1][1] && max_aabb[0][1] >= min_aabb[1][1]) &&
+                        (min_aabb[0][2] <= max_aabb[1][2] && max_aabb[0][2] >= min_aabb[1][2]);
+
+      if (aabb_check)
+      {
+        bool needs_collision = needsCollisionCheck(*cow1, *cow2, fn_, false);
+
+        if (needs_collision)
+        {
+          btCollisionObjectWrapper obB(
+              nullptr, cow2->getCollisionShape(), cow2.get(), cow2->getWorldTransform(), -1, -1);
+
+          btCollisionAlgorithm* algorithm =
+              dispatcher_->findAlgorithm(&obA, &obB, nullptr, BT_CLOSEST_POINT_ALGORITHMS);
+          assert(algorithm != nullptr);
+          if (algorithm)
+          {
+            TesseractBridgedManifoldResult contactPointResult(&obA, &obB, cc);
+            contactPointResult.m_closestPointDistanceThreshold = cc.m_closestDistanceThreshold;
+
+            // discrete collision detection query
+            algorithm->processCollision(&obA, &obB, dispatch_info_, &contactPointResult);
+
+            algorithm->~btCollisionAlgorithm();
+            dispatcher_->freeCollisionAlgorithm(algorithm);
+          }
+        }
+      }
+
+      if (cdata.done)
+        break;
+    }
+  }
+}
+
 void BulletDiscreteSimpleManager::addCollisionObject(const COWPtr& cow)
 {
   link2cow_[cow->getName()] = cow;
