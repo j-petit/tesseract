@@ -291,8 +291,10 @@ void BulletDiscreteSimpleManager::contactTest(ContactResultMap& collisions, cons
       const COWPtr& cow2 = *cow2_iter;
       cow2->getAABB(min_aabb[1], max_aabb[1]);
 
-      if (!acm->getEntry(cow1->getName(), cow2->getName(), allowed_type) || !(allowed_type == collision_detection::AllowedCollision::Type::NEVER)) {
+      if (acm) {
+        if (!acm->getEntry(cow1->getName(), cow2->getName(), allowed_type) || !(allowed_type == collision_detection::AllowedCollision::Type::NEVER)) {
           continue;
+        }
       }
 
 
