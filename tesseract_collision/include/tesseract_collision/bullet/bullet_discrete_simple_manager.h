@@ -91,7 +91,8 @@ public:
 
   void contactTest(ContactResultMap& collisions, const ContactTestType& type) override;
 
-  void contactTest(ContactResultMap& collisions, const ContactTestType& type, const collision_detection::AllowedCollisionMatrix* acm);
+  void contactTest(ContactResultMap& collisions, const ContactTestType& type, const collision_detection::AllowedCollisionMatrix* acm,
+      const collision_detection::CollisionRequest& req);
 
   /**
    * @brief A a bullet collision object to the manager

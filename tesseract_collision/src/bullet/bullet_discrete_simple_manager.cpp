@@ -261,7 +261,8 @@ void BulletDiscreteSimpleManager::contactTest(ContactResultMap& collisions, cons
   }
 }
 
-void BulletDiscreteSimpleManager::contactTest(ContactResultMap& collisions, const ContactTestType& type, const collision_detection::AllowedCollisionMatrix* acm)
+void BulletDiscreteSimpleManager::contactTest(ContactResultMap& collisions, const ContactTestType& type, const collision_detection::AllowedCollisionMatrix* acm,
+    const collision_detection::CollisionRequest& req)
 {
   ContactTestData cdata(active_, contact_distance_, fn_, type, collisions);
 
@@ -291,12 +292,29 @@ void BulletDiscreteSimpleManager::contactTest(ContactResultMap& collisions, cons
       const COWPtr& cow2 = *cow2_iter;
       cow2->getAABB(min_aabb[1], max_aabb[1]);
 
-      if (acm) {
-        if (!acm->getEntry(cow1->getName(), cow2->getName(), allowed_type) || !(allowed_type == collision_detection::AllowedCollision::Type::NEVER)) {
-          continue;
+      if (acm)
+      {
+        if (acm->getEntry(cow1->getName(), cow2->getName(), allowed_type))
+        {
+          if (allowed_type == collision_detection::AllowedCollision::Type::NEVER)
+          {
+            if (req.verbose)
+              ROS_DEBUG_STREAM("Entry in ACM found, collision check as not allowed" << cow1->getName() << " and " << cow2->getName());
+          }
+          else {
+            if (req.verbose)
+              ROS_DEBUG_STREAM("Entry in ACM found, skipping collision check as allowed" << cow1->getName() << " and " << cow2->getName());
+            continue;
+          }
+        }
+        else {
+          if (req.verbose)
+            ROS_DEBUG_STREAM("No entry in ACM found, collision check between " << cow1->getName() << " and " << cow2->getName());
         }
       }
-
+      else {
+            ROS_DEBUG_STREAM("No ACM, collision check between " << cow1->getName() << " and " << cow2->getName());
+      }
 
       bool aabb_check = (min_aabb[0][0] <= max_aabb[1][0] && max_aabb[0][0] >= min_aabb[1][0]) &&
                         (min_aabb[0][1] <= max_aabb[1][1] && max_aabb[0][1] >= min_aabb[1][1]) &&
@@ -331,6 +349,17 @@ void BulletDiscreteSimpleManager::contactTest(ContactResultMap& collisions, cons
       if (cdata.done)
         break;
     }
+  }
+
+  if (req.verbose) {
+    tesseract::ContactResultVector results;
+    tesseract::moveContactResultsMapToContactResultsVector(collisions, results);
+
+    for (auto& result : results) {
+      ROS_INFO_STREAM("Found contact between " << result.link_names[0] << " and " << result.link_names[1]);
+      ROS_INFO_STREAM(result.distance);
+    }
+
   }
 }
 
