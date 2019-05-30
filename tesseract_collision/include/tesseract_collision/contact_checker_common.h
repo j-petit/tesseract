@@ -93,17 +93,18 @@ isContactAllowed(const std::string& name1, const std::string& name2, const IsCon
   return false;
 }
 
-inline ContactResult* processResult(ContactTestData& cdata,
-                                    ContactResult& contact,
+inline collision_detection::Contact* processResult(ContactTestData& cdata,
+                                    collision_detection::Contact& contact,
                                     const std::pair<std::string, std::string>& key,
                                     bool found)
 {
   if (!found)
   {
-    ContactResultVector data;
+    std::vector<collision_detection::Contact> data;
     if (cdata.type == ContactTestType::FIRST)
     {
       data.emplace_back(contact);
+      ROS_INFO_STREAM("Contact btw " << key.first << " and " << key.second << " dist: " << contact.depth);
       cdata.done = true;
     }
     else
@@ -112,12 +113,12 @@ inline ContactResult* processResult(ContactTestData& cdata,
       data.emplace_back(contact);
     }
 
-    return &(cdata.res.insert(std::make_pair(key, data)).first->second.back());
+    return &(cdata.res.contacts.insert(std::make_pair(key, data)).first->second.back());
   }
   else
   {
     assert(cdata.type != ContactTestType::FIRST);
-    ContactResultVector& dr = cdata.res[key];
+    std::vector<collision_detection::Contact>& dr = cdata.res.contacts[key];
     if (cdata.type == ContactTestType::ALL)
     {
       dr.emplace_back(contact);
@@ -125,7 +126,7 @@ inline ContactResult* processResult(ContactTestData& cdata,
     }
     else if (cdata.type == ContactTestType::CLOSEST)
     {
-      if (contact.distance < dr[0].distance)
+      if (contact.depth < dr[0].depth)
       {
         dr[0] = contact;
         return &(dr[0]);

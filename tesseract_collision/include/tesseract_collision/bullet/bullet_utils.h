@@ -344,8 +344,8 @@ inline btScalar addDiscreteSingleResult(btManifoldPoint& cp,
 
   ObjectPairKey pc = getObjectPairKey(cd0->getName(), cd1->getName());
 
-  const auto& it = collisions.res.find(pc);
-  bool found = (it != collisions.res.end());
+  const auto& it = collisions.res.contacts.find(pc);
+  bool found = (it != collisions.res.contacts.end());
 
   //    size_t l = 0;
   //    if (found)
@@ -356,15 +356,43 @@ inline btScalar addDiscreteSingleResult(btManifoldPoint& cp,
 
   //    }
 
-  ContactResult contact;
-  contact.link_names[0] = cd0->getName();
-  contact.link_names[1] = cd1->getName();
-  contact.nearest_points[0] = convertBtToEigen(cp.m_positionWorldOnA);
-  contact.nearest_points[1] = convertBtToEigen(cp.m_positionWorldOnB);
-  contact.type_id[0] = cd0->getTypeID();
-  contact.type_id[1] = cd1->getTypeID();
-  contact.distance = static_cast<double>(cp.m_distance1);
+  collision_detection::Contact contact;
+  contact.body_name_1 = cd0->getName();
+  contact.body_name_2 = cd1->getName();
+  contact.depth = static_cast<double>(cp.m_distance1);
   contact.normal = convertBtToEigen(-1 * cp.m_normalWorldOnB);
+  contact.pos = convertBtToEigen(cp.m_positionWorldOnA);
+  switch (cd0->getTypeID()) {
+    case 0:
+      contact.body_type_1 = collision_detection::BodyType::ROBOT_LINK;
+      break;
+    case 1:
+      contact.body_type_1 = collision_detection::BodyType::ROBOT_ATTACHED;
+      break;
+    case 2:
+      contact.body_type_1 = collision_detection::BodyType::WORLD_OBJECT;
+      break;
+    default:
+      ROS_ERROR_STREAM("No known body type");
+  }
+
+  switch (cd1->getTypeID()) {
+    case 0:
+      contact.body_type_2 = collision_detection::BodyType::ROBOT_LINK;
+      break;
+    case 1:
+      contact.body_type_2 = collision_detection::BodyType::ROBOT_ATTACHED;
+      break;
+    case 2:
+      contact.body_type_2 = collision_detection::BodyType::WORLD_OBJECT;
+      break;
+    default:
+      ROS_ERROR_STREAM("No known body type");
+  }
+
+  //contact.body_type_1 = cd0->getTypeID();
+  //contact.body_type_2 = cd1->getTypeID();
+  //contact.nearest_points[2] = convertBtToEigen(cp.m_positionWorldOnB);
 
   if (!processResult(collisions, contact, pc, found))
   {
@@ -381,113 +409,6 @@ inline btScalar addCastSingleResult(btManifoldPoint& cp,
                                     int /*index1*/,
                                     ContactTestData& collisions)
 {
-  assert(dynamic_cast<const CollisionObjectWrapper*>(colObj0Wrap->getCollisionObject()) != nullptr);
-  assert(dynamic_cast<const CollisionObjectWrapper*>(colObj1Wrap->getCollisionObject()) != nullptr);
-  const CollisionObjectWrapper* cd0 = static_cast<const CollisionObjectWrapper*>(colObj0Wrap->getCollisionObject());
-  const CollisionObjectWrapper* cd1 = static_cast<const CollisionObjectWrapper*>(colObj1Wrap->getCollisionObject());
-
-  const std::pair<std::string, std::string>& pc = cd0->getName() < cd1->getName() ?
-                                                      std::make_pair(cd0->getName(), cd1->getName()) :
-                                                      std::make_pair(cd1->getName(), cd0->getName());
-
-  ContactResultMap::iterator it = collisions.res.find(pc);
-  bool found = it != collisions.res.end();
-
-  //    size_t l = 0;
-  //    if (found)
-  //    {
-  //      l = it->second.size();
-  //      if (m_collisions.req->type == DistanceRequestType::LIMITED && l >= m_collisions.req->max_contacts_per_body)
-  //          return 0;
-  //    }
-
-  ContactResult contact;
-  contact.link_names[0] = cd0->getName();
-  contact.link_names[1] = cd1->getName();
-  contact.nearest_points[0] = convertBtToEigen(cp.m_positionWorldOnA);
-  contact.nearest_points[1] = convertBtToEigen(cp.m_positionWorldOnB);
-  contact.type_id[0] = cd0->getTypeID();
-  contact.type_id[1] = cd1->getTypeID();
-  contact.distance = static_cast<double>(cp.m_distance1);
-  contact.normal = convertBtToEigen(-1 * cp.m_normalWorldOnB);
-
-  ContactResult* col = processResult(collisions, contact, pc, found);
-  if (!col)
-  {
-    return 0;
-  }
-
-  assert(!((cd0->m_collisionFilterGroup == btBroadphaseProxy::KinematicFilter) &&
-           (cd1->m_collisionFilterGroup == btBroadphaseProxy::KinematicFilter)));
-  bool castShapeIsFirst = (cd0->m_collisionFilterGroup == btBroadphaseProxy::KinematicFilter) ? true : false;
-
-  btVector3 normalWorldFromCast = -(castShapeIsFirst ? 1 : -1) * cp.m_normalWorldOnB;
-  const btCollisionObjectWrapper* firstColObjWrap = (castShapeIsFirst ? colObj0Wrap : colObj1Wrap);
-
-  if (castShapeIsFirst)
-  {
-    std::swap(col->nearest_points[0], col->nearest_points[1]);
-    std::swap(col->link_names[0], col->link_names[1]);
-    std::swap(col->type_id[0], col->type_id[1]);
-    col->normal *= -1;
-  }
-
-  btTransform tfWorld0, tfWorld1;
-  assert(dynamic_cast<const CastHullShape*>(firstColObjWrap->getCollisionShape()) != nullptr);
-  const CastHullShape* shape = static_cast<const CastHullShape*>(firstColObjWrap->getCollisionShape());
-  assert(shape != nullptr);
-
-  tfWorld0 = firstColObjWrap->getWorldTransform();
-  tfWorld1 = firstColObjWrap->getWorldTransform() * shape->m_t01;
-
-  btVector3 normalLocal0 = normalWorldFromCast * tfWorld0.getBasis();
-  btVector3 normalLocal1 = normalWorldFromCast * tfWorld1.getBasis();
-
-  btVector3 ptLocal0;
-  float localsup0;
-  GetAverageSupport(shape->m_shape, normalLocal0, localsup0, ptLocal0);
-  btVector3 ptWorld0 = tfWorld0 * ptLocal0;
-  btVector3 ptLocal1;
-  float localsup1;
-  GetAverageSupport(shape->m_shape, normalLocal1, localsup1, ptLocal1);
-  btVector3 ptWorld1 = tfWorld1 * ptLocal1;
-
-  float sup0 = normalWorldFromCast.dot(ptWorld0);
-  float sup1 = normalWorldFromCast.dot(ptWorld1);
-
-  // TODO: this section is potentially problematic. think hard about the math
-  if (sup0 - sup1 > BULLET_SUPPORT_FUNC_TOLERANCE)
-  {
-    col->cc_time = 0;
-    col->cc_type = ContinouseCollisionType::CCType_Time0;
-  }
-  else if (sup1 - sup0 > BULLET_SUPPORT_FUNC_TOLERANCE)
-  {
-    col->cc_time = 1;
-    col->cc_type = ContinouseCollisionType::CCType_Time1;
-  }
-  else
-  {
-    const btVector3& ptOnCast = castShapeIsFirst ? cp.m_positionWorldOnA : cp.m_positionWorldOnB;
-    float l0c = (ptOnCast - ptWorld0).length();
-    float l1c = (ptOnCast - ptWorld1).length();
-
-    col->cc_nearest_points[0] = col->nearest_points[1];
-    col->nearest_points[1] = convertBtToEigen(ptWorld0);
-
-    col->cc_nearest_points[1] = convertBtToEigen(ptWorld1);
-    col->cc_type = ContinouseCollisionType::CCType_Between;
-
-    if (l0c + l1c < BULLET_LENGTH_TOLERANCE)
-    {
-      col->cc_time = .5;
-    }
-    else
-    {
-      col->cc_time = static_cast<double>(l0c / (l0c + l1c));
-    }
-  }
-
   return 1;
 }
 

@@ -37,6 +37,7 @@ TESSERACT_IGNORE_WARNINGS_PUSH
 #include <memory>
 #include <functional>
 #include <map>
+#include <moveit/collision_detection/collision_common.h>
 TESSERACT_IGNORE_WARNINGS_POP
 
 namespace tesseract
@@ -248,7 +249,7 @@ struct ContactTestData
                   const double& contact_distance,
                   const IsContactAllowedFn& fn,
                   const ContactTestType& type,
-                  ContactResultMap& res)
+                  collision_detection::CollisionResult& res)
     : active(active), contact_distance(contact_distance), fn(fn), type(type), res(res), done(false)
   {
   }
@@ -258,8 +259,8 @@ struct ContactTestData
   const IsContactAllowedFn& fn;
   const ContactTestType& type;
 
-  /// Destance query results information
-  ContactResultMap& res;
+  /// Distance query results information
+  collision_detection::CollisionResult& res;
 
   /// Indicate if search is finished
   bool done;

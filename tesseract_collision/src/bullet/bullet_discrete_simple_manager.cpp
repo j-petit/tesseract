@@ -200,68 +200,10 @@ void BulletDiscreteSimpleManager::setIsContactAllowedFn(IsContactAllowedFn fn) {
 IsContactAllowedFn BulletDiscreteSimpleManager::getIsContactAllowedFn() const { return fn_; }
 void BulletDiscreteSimpleManager::contactTest(ContactResultMap& collisions, const ContactTestType& type)
 {
-  ContactTestData cdata(active_, contact_distance_, fn_, type, collisions);
-
-  for (auto cow1_iter = cows_.begin(); cow1_iter != (cows_.end() - 1); cow1_iter++)
-  {
-    const COWPtr& cow1 = *cow1_iter;
-
-    if (cow1->m_collisionFilterGroup != btBroadphaseProxy::KinematicFilter)
-      break;
-
-    if (!cow1->m_enabled)
-      continue;
-
-    btVector3 min_aabb[2], max_aabb[2];
-    cow1->getAABB(min_aabb[0], max_aabb[0]);
-
-    btCollisionObjectWrapper obA(nullptr, cow1->getCollisionShape(), cow1.get(), cow1->getWorldTransform(), -1, -1);
-
-    DiscreteCollisionCollector cc(cdata, cow1, static_cast<double>(cow1->getContactProcessingThreshold()));
-    for (auto cow2_iter = cow1_iter + 1; cow2_iter != cows_.end(); cow2_iter++)
-    {
-      assert(!cdata.done);
-
-      const COWPtr& cow2 = *cow2_iter;
-      cow2->getAABB(min_aabb[1], max_aabb[1]);
-
-      bool aabb_check = (min_aabb[0][0] <= max_aabb[1][0] && max_aabb[0][0] >= min_aabb[1][0]) &&
-                        (min_aabb[0][1] <= max_aabb[1][1] && max_aabb[0][1] >= min_aabb[1][1]) &&
-                        (min_aabb[0][2] <= max_aabb[1][2] && max_aabb[0][2] >= min_aabb[1][2]);
-
-      if (aabb_check)
-      {
-        bool needs_collision = needsCollisionCheck(*cow1, *cow2, fn_, false);
-
-        if (needs_collision)
-        {
-          btCollisionObjectWrapper obB(
-              nullptr, cow2->getCollisionShape(), cow2.get(), cow2->getWorldTransform(), -1, -1);
-
-          btCollisionAlgorithm* algorithm =
-              dispatcher_->findAlgorithm(&obA, &obB, nullptr, BT_CLOSEST_POINT_ALGORITHMS);
-          assert(algorithm != nullptr);
-          if (algorithm)
-          {
-            TesseractBridgedManifoldResult contactPointResult(&obA, &obB, cc);
-            contactPointResult.m_closestPointDistanceThreshold = cc.m_closestDistanceThreshold;
-
-            // discrete collision detection query
-            algorithm->processCollision(&obA, &obB, dispatch_info_, &contactPointResult);
-
-            algorithm->~btCollisionAlgorithm();
-            dispatcher_->freeCollisionAlgorithm(algorithm);
-          }
-        }
-      }
-
-      if (cdata.done)
-        break;
-    }
-  }
+  ROS_ERROR_STREAM("Not implemented, superseeded by adapted version for moveit");
 }
 
-void BulletDiscreteSimpleManager::contactTest(ContactResultMap& collisions, const ContactTestType& type, const collision_detection::AllowedCollisionMatrix* acm,
+void BulletDiscreteSimpleManager::contactTest(collision_detection::CollisionResult& collisions, const ContactTestType& type, const collision_detection::AllowedCollisionMatrix* acm,
     const collision_detection::CollisionRequest& req)
 {
   ContactTestData cdata(active_, contact_distance_, fn_, type, collisions);
@@ -286,7 +228,6 @@ void BulletDiscreteSimpleManager::contactTest(ContactResultMap& collisions, cons
     collision_detection::AllowedCollision::Type allowed_type;
     for (auto cow2_iter = cow1_iter + 1; cow2_iter != cows_.end(); cow2_iter++)
     {
-
       assert(!cdata.done);
 
       const COWPtr& cow2 = *cow2_iter;
@@ -326,6 +267,8 @@ void BulletDiscreteSimpleManager::contactTest(ContactResultMap& collisions, cons
 
         if (needs_collision)
         {
+          ROS_DEBUG_STREAM("Check executed, cdata: " << (cdata.done ? "true | " : "false | ") << cow1->getName() << " | " << cow2->getName());
+
           btCollisionObjectWrapper obB(
               nullptr, cow2->getCollisionShape(), cow2.get(), cow2->getWorldTransform(), -1, -1);
 
@@ -346,21 +289,16 @@ void BulletDiscreteSimpleManager::contactTest(ContactResultMap& collisions, cons
         }
       }
 
-      if (cdata.done)
+      if (cdata.done) {
         break;
+      }
     }
   }
 
-  if (req.verbose) {
-    tesseract::ContactResultVector results;
-    tesseract::moveContactResultsMapToContactResultsVector(collisions, results);
+  collisions.collision = !collisions.contacts.empty();
+  collisions.contact_count = collisions.contacts.size();
 
-    for (auto& result : results) {
-      ROS_INFO_STREAM("Found contact between " << result.link_names[0] << " and " << result.link_names[1]);
-      ROS_INFO_STREAM(result.distance);
-    }
-
-  }
+  ROS_DEBUG_STREAM((collisions.collision ? "In" : "No") << " collision with " << collisions.contact_count << " collisions");
 }
 
 void BulletDiscreteSimpleManager::addCollisionObject(const COWPtr& cow)

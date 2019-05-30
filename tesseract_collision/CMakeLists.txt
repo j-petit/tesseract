@@ -60,9 +60,9 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME}_bullet
-  src/bullet/bullet_cast_bvh_manager.cpp
-  src/bullet/bullet_cast_simple_manager.cpp
-  src/bullet/bullet_discrete_bvh_manager.cpp
+    #src/bullet/bullet_cast_bvh_manager.cpp
+    #src/bullet/bullet_cast_simple_manager.cpp
+    #src/bullet/bullet_discrete_bvh_manager.cpp
   src/bullet/bullet_discrete_simple_manager.cpp
   src/bullet/bullet_utils.cpp
 )
@@ -74,24 +74,24 @@ add_library(${PROJECT_NAME}_bullet_plugin src/bullet/bullet_plugin.cpp)
 target_link_libraries(${PROJECT_NAME}_bullet_plugin ${PROJECT_NAME}_bullet ${catkin_LIBRARIES})
 target_compile_options(${PROJECT_NAME}_bullet_plugin PRIVATE -Wsuggest-override -Wconversion -Wsign-conversion)
 
-add_library(${PROJECT_NAME}_fcl
-  src/fcl/fcl_discrete_managers.cpp
-  src/fcl/fcl_utils.cpp
-)
-
-target_link_libraries(${PROJECT_NAME}_fcl ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES})
-target_compile_options(${PROJECT_NAME}_fcl PRIVATE -Wsuggest-override -Wconversion -Wsign-conversion)
-
-add_library(${PROJECT_NAME}_fcl_plugin src/fcl/fcl_plugin.cpp)
-target_link_libraries(${PROJECT_NAME}_fcl_plugin ${PROJECT_NAME}_fcl ${catkin_LIBRARIES})
-target_compile_options(${PROJECT_NAME}_fcl_plugin PRIVATE -Wsuggest-override -Wconversion -Wsign-conversion)
+# add_library(${PROJECT_NAME}_fcl
+#   src/fcl/fcl_discrete_managers.cpp
+#   src/fcl/fcl_utils.cpp
+# )
+#
+# target_link_libraries(${PROJECT_NAME}_fcl ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES} ${LIBFCL_LIBRARIES})
+# target_compile_options(${PROJECT_NAME}_fcl PRIVATE -Wsuggest-override -Wconversion -Wsign-conversion)
+#
+# add_library(${PROJECT_NAME}_fcl_plugin src/fcl/fcl_plugin.cpp)
+# target_link_libraries(${PROJECT_NAME}_fcl_plugin ${PROJECT_NAME}_fcl ${catkin_LIBRARIES})
+# target_compile_options(${PROJECT_NAME}_fcl_plugin PRIVATE -Wsuggest-override -Wconversion -Wsign-conversion)
 
 add_executable(create_convex_hull src/create_convex_hull.cpp)
 target_link_libraries(create_convex_hull ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OCTOMAP_LIBRARIES})
 target_compile_options(create_convex_hull PRIVATE -Wsuggest-override -Wconversion -Wsign-conversion)
 
 # Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME}_bullet ${PROJECT_NAME}_fcl ${PROJECT_NAME}_bullet_plugin ${PROJECT_NAME}_fcl_plugin create_convex_hull
+install(TARGETS ${PROJECT_NAME}_bullet ${PROJECT_NAME}_bullet_plugin create_convex_hull
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -104,7 +104,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
   PATTERN ".svn" EXCLUDE
  )
 
-install(FILES tesseract_collision_bullet_plugin_description.xml tesseract_collision_fcl_plugin_description.xml
+install(FILES tesseract_collision_bullet_plugin_description.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 

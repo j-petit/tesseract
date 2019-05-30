@@ -91,7 +91,7 @@ public:
 
   void contactTest(ContactResultMap& collisions, const ContactTestType& type) override;
 
-  void contactTest(ContactResultMap& collisions, const ContactTestType& type, const collision_detection::AllowedCollisionMatrix* acm,
+  void contactTest(collision_detection::CollisionResult& collisions, const ContactTestType& type, const collision_detection::AllowedCollisionMatrix* acm,
       const collision_detection::CollisionRequest& req);
 
   /**
