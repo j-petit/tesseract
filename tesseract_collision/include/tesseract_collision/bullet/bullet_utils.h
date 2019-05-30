@@ -362,7 +362,8 @@ inline btScalar addDiscreteSingleResult(btManifoldPoint& cp,
   contact.depth = static_cast<double>(cp.m_distance1);
   contact.normal = convertBtToEigen(-1 * cp.m_normalWorldOnB);
   contact.pos = convertBtToEigen(cp.m_positionWorldOnA);
-  switch (cd0->getTypeID()) {
+  switch (cd0->getTypeID())
+  {
     case 0:
       contact.body_type_1 = collision_detection::BodyType::ROBOT_LINK;
       break;
@@ -376,7 +377,8 @@ inline btScalar addDiscreteSingleResult(btManifoldPoint& cp,
       ROS_ERROR_STREAM("No known body type");
   }
 
-  switch (cd1->getTypeID()) {
+  switch (cd1->getTypeID())
+  {
     case 0:
       contact.body_type_2 = collision_detection::BodyType::ROBOT_LINK;
       break;
@@ -390,9 +392,9 @@ inline btScalar addDiscreteSingleResult(btManifoldPoint& cp,
       ROS_ERROR_STREAM("No known body type");
   }
 
-  //contact.body_type_1 = cd0->getTypeID();
-  //contact.body_type_2 = cd1->getTypeID();
-  //contact.nearest_points[2] = convertBtToEigen(cp.m_positionWorldOnB);
+  // contact.body_type_1 = cd0->getTypeID();
+  // contact.body_type_2 = cd1->getTypeID();
+  // contact.nearest_points[2] = convertBtToEigen(cp.m_positionWorldOnB);
 
   if (!processResult(collisions, contact, pc, found))
   {

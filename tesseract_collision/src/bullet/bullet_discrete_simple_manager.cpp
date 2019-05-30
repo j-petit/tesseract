@@ -203,8 +203,10 @@ void BulletDiscreteSimpleManager::contactTest(ContactResultMap& collisions, cons
   ROS_ERROR_STREAM("Not implemented, superseeded by adapted version for moveit");
 }
 
-void BulletDiscreteSimpleManager::contactTest(collision_detection::CollisionResult& collisions, const ContactTestType& type, const collision_detection::AllowedCollisionMatrix* acm,
-    const collision_detection::CollisionRequest& req)
+void BulletDiscreteSimpleManager::contactTest(collision_detection::CollisionResult& collisions,
+                                              const ContactTestType& type,
+                                              const collision_detection::AllowedCollisionMatrix* acm,
+                                              const collision_detection::CollisionRequest& req)
 {
   ContactTestData cdata(active_, contact_distance_, fn_, type, collisions);
 
@@ -240,21 +242,27 @@ void BulletDiscreteSimpleManager::contactTest(collision_detection::CollisionResu
           if (allowed_type == collision_detection::AllowedCollision::Type::NEVER)
           {
             if (req.verbose)
-              ROS_DEBUG_STREAM("Entry in ACM found, collision check as not allowed" << cow1->getName() << " and " << cow2->getName());
+              ROS_DEBUG_STREAM("Entry in ACM found, collision check as not allowed" << cow1->getName() << " and "
+                                                                                    << cow2->getName());
           }
-          else {
+          else
+          {
             if (req.verbose)
-              ROS_DEBUG_STREAM("Entry in ACM found, skipping collision check as allowed" << cow1->getName() << " and " << cow2->getName());
+              ROS_DEBUG_STREAM("Entry in ACM found, skipping collision check as allowed" << cow1->getName() << " and "
+                                                                                         << cow2->getName());
             continue;
           }
         }
-        else {
+        else
+        {
           if (req.verbose)
-            ROS_DEBUG_STREAM("No entry in ACM found, collision check between " << cow1->getName() << " and " << cow2->getName());
+            ROS_DEBUG_STREAM("No entry in ACM found, collision check between " << cow1->getName() << " and "
+                                                                               << cow2->getName());
         }
       }
-      else {
-            ROS_DEBUG_STREAM("No ACM, collision check between " << cow1->getName() << " and " << cow2->getName());
+      else
+      {
+        ROS_DEBUG_STREAM("No ACM, collision check between " << cow1->getName() << " and " << cow2->getName());
       }
 
       bool aabb_check = (min_aabb[0][0] <= max_aabb[1][0] && max_aabb[0][0] >= min_aabb[1][0]) &&
@@ -267,7 +275,9 @@ void BulletDiscreteSimpleManager::contactTest(collision_detection::CollisionResu
 
         if (needs_collision)
         {
-          ROS_DEBUG_STREAM("Check executed, cdata: " << (cdata.done ? "true | " : "false | ") << cow1->getName() << " | " << cow2->getName());
+          ROS_DEBUG_STREAM("Check executed, cdata: " << (cdata.done ? "true | " : "false | ") << cow1->getName()
+                                                     << " | "
+                                                     << cow2->getName());
 
           btCollisionObjectWrapper obB(
               nullptr, cow2->getCollisionShape(), cow2.get(), cow2->getWorldTransform(), -1, -1);
@@ -289,7 +299,8 @@ void BulletDiscreteSimpleManager::contactTest(collision_detection::CollisionResu
         }
       }
 
-      if (cdata.done) {
+      if (cdata.done)
+      {
         break;
       }
     }
@@ -298,7 +309,8 @@ void BulletDiscreteSimpleManager::contactTest(collision_detection::CollisionResu
   collisions.collision = !collisions.contacts.empty();
   collisions.contact_count = collisions.contacts.size();
 
-  ROS_DEBUG_STREAM((collisions.collision ? "In" : "No") << " collision with " << collisions.contact_count << " collisions");
+  ROS_DEBUG_STREAM((collisions.collision ? "In" : "No") << " collision with " << collisions.contact_count << " collisio"
+                                                                                                             "ns");
 }
 
 void BulletDiscreteSimpleManager::addCollisionObject(const COWPtr& cow)

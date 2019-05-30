@@ -94,9 +94,9 @@ isContactAllowed(const std::string& name1, const std::string& name2, const IsCon
 }
 
 inline collision_detection::Contact* processResult(ContactTestData& cdata,
-                                    collision_detection::Contact& contact,
-                                    const std::pair<std::string, std::string>& key,
-                                    bool found)
+                                                   collision_detection::Contact& contact,
+                                                   const std::pair<std::string, std::string>& key,
+                                                   bool found)
 {
   if (!found)
   {
