@@ -242,7 +242,7 @@ void BulletDiscreteSimpleManager::contactTest(collision_detection::CollisionResu
           if (allowed_type == collision_detection::AllowedCollision::Type::NEVER)
           {
             if (req.verbose)
-              ROS_DEBUG_STREAM("Entry in ACM found, collision check as not allowed" << cow1->getName() << " and "
+              ROS_DEBUG_STREAM("Not allowed entry in ACM found, collision check." << cow1->getName() << " and "
                                                                                     << cow2->getName());
           }
           else
@@ -299,11 +299,20 @@ void BulletDiscreteSimpleManager::contactTest(collision_detection::CollisionResu
         }
       }
 
-      if (cdata.done)
+      if (!req.contacts || collisions.contacts.size() >= req.max_contacts)
       {
-        break;
+          if (!req.cost)
+            cdata.done = true;
+          if (req.verbose)
+            ROS_INFO_NAMED("collision_detection.fcl",
+                           "Collision checking is considered complete (collision was found and %u contacts are stored)",
+                           (unsigned int)collisions.contact_count);
       }
+      if (cdata.done)
+        break;
     }
+    if (cdata.done)
+        break;
   }
 
   collisions.collision = !collisions.contacts.empty();
