@@ -809,6 +809,7 @@ struct DiscreteCollisionCollector : public btCollisionWorld::ContactResultCallba
     if (cp.m_distance1 > static_cast<btScalar>(contact_distance_))
       return 0;
 
+    ROS_DEBUG_STREAM("We have a collision!");
     return addDiscreteSingleResult(cp, colObj0Wrap, colObj1Wrap, collisions_);
   }
 

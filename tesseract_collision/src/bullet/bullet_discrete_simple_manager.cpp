@@ -210,15 +210,27 @@ void BulletDiscreteSimpleManager::contactTest(collision_detection::CollisionResu
 {
   ContactTestData cdata(active_, contact_distance_, fn_, type, collisions);
 
+  ROS_DEBUG_STREAM("Printing all cows");
+  for (auto& cow : cows_)
+  {
+    ROS_DEBUG_STREAM(cow->getName());
+  }
+
   for (auto cow1_iter = cows_.begin(); cow1_iter != (cows_.end() - 1); cow1_iter++)
   {
     const COWPtr& cow1 = *cow1_iter;
 
+    ROS_DEBUG_STREAM("On COW " << cow1->getName());
+
     if (cow1->m_collisionFilterGroup != btBroadphaseProxy::KinematicFilter)
+    {
       break;
+    }
 
     if (!cow1->m_enabled)
+    {
       continue;
+    }
 
     btVector3 min_aabb[2], max_aabb[2];
     cow1->getAABB(min_aabb[0], max_aabb[0]);
@@ -241,23 +253,20 @@ void BulletDiscreteSimpleManager::contactTest(collision_detection::CollisionResu
         {
           if (allowed_type == collision_detection::AllowedCollision::Type::NEVER)
           {
-            if (req.verbose)
-              ROS_DEBUG_STREAM("Not allowed entry in ACM found, collision check." << cow1->getName() << " and "
-                                                                                    << cow2->getName());
+            ROS_DEBUG_STREAM("Not allowed entry in ACM found, collision check between " << cow1->getName() << " and "
+                                                                                        << cow2->getName());
           }
           else
           {
-            if (req.verbose)
-              ROS_DEBUG_STREAM("Entry in ACM found, skipping collision check as allowed" << cow1->getName() << " and "
-                                                                                         << cow2->getName());
+            ROS_DEBUG_STREAM("Entry in ACM found, skipping collision check as allowed " << cow1->getName() << " and "
+                                                                                        << cow2->getName());
             continue;
           }
         }
         else
         {
-          if (req.verbose)
-            ROS_DEBUG_STREAM("No entry in ACM found, collision check between " << cow1->getName() << " and "
-                                                                               << cow2->getName());
+          ROS_DEBUG_STREAM("No entry in ACM found, collision check between " << cow1->getName() << " and "
+                                                                             << cow2->getName());
         }
       }
       else
@@ -275,7 +284,7 @@ void BulletDiscreteSimpleManager::contactTest(collision_detection::CollisionResu
 
         if (needs_collision)
         {
-          ROS_DEBUG_STREAM("Check executed, cdata: " << (cdata.done ? "true | " : "false | ") << cow1->getName()
+          ROS_DEBUG_STREAM("Check will execute, cdata: done, " << (cdata.done ? "true | " : "false | ") << cow1->getName()
                                                      << " | "
                                                      << cow2->getName());
 
@@ -295,24 +304,31 @@ void BulletDiscreteSimpleManager::contactTest(collision_detection::CollisionResu
 
             algorithm->~btCollisionAlgorithm();
             dispatcher_->freeCollisionAlgorithm(algorithm);
+
           }
         }
       }
 
-      if (!req.contacts || collisions.contacts.size() >= req.max_contacts)
+      if (collisions.contacts.size() >= req.max_contacts)
       {
           if (!req.cost)
+          {
             cdata.done = true;
-          if (req.verbose)
-            ROS_INFO_NAMED("collision_detection.fcl",
+          }
+          ROS_INFO_NAMED("collision_detection.fcl",
                            "Collision checking is considered complete (collision was found and %u contacts are stored)",
                            (unsigned int)collisions.contact_count);
       }
+
       if (cdata.done)
+      {
         break;
+      }
     }
     if (cdata.done)
+    {
         break;
+    }
   }
 
   collisions.collision = !collisions.contacts.empty();
